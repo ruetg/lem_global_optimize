@@ -1,6 +1,5 @@
 # lem_global_optimize
-The simplem_par classes should be alright - no need to modify
-Although Should be able to run the tests in tests.ipynb
+The simplem_par classes should be alright - no need to modify. Should be able to run the tests in tests.ipynb - hopefully it is straight forward but ofcourse these things never end up being exactly as anticipated...
 
 We mostly want to run the Run_montecarlo.py script.  The main thing that needs to be modified in that script right away are the data folders. 
 
