@@ -609,12 +609,26 @@ def diffuse(Z, D=1.0, dy=90, dx=90, dt=1):
     E = np.zeros((ny, nx))
     for i in range(1, ny - 1):
         for j in range(1, nx - 1):
+            zijp = Z[i, j+1]
+            zijm = Z[i, j-1]
+            zimj = Z[i-1, j]
+            zipj = Z[i+1, j]
+            
             E[i, j] = D * ((2 * Z[i, j] -
-                            Z[i + 1, j] -
-                            Z[i - 1, j]) /
+                            zipj -
+                            zimj) /
                            (dy ** 2) +
-                           (2 * Z[i, j] - Z[i, j + 1] - Z[i, j - 1])
+                           (2 * Z[i, j] - zijp - zijm)
                            / (dx ** 2))
+            if zijp <= 0:
+                E[i,j] =0
+            if zijm <= 0:
+                E[i,j] =0
+            if zimj <= 0:
+                E[i,j] =0
+            if zipj <= 0:
+                E[i,j] =0
+           
     E *= dt
 
     return E

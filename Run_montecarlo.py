@@ -6,23 +6,24 @@ import sys
 import simplem_par as simplem
 import numpy as np
 import ast
+from os.path import exists
 
 ################ -------Params-------- ##################################
-dem_folder = '/Users/gr_1/Google Drive_1/data_earth_engine/basins_v3/'
-outfolder = 'results/v3_dAp/'
+dem_folder = '/projects/gregr13210@xsede.org/basins_v3/'
+outfolder = '/projects/gregr13210@xsede.org/results/v3_dall_3/' 
 # Number of processors
-n_proc = 4
+n_proc = 38
 # Number of simulations (parameter sets)
-nr = 1000  
+nr = 10000
 ## Stream power parameters
 #Stream power m/n (theta)
 theta = 0.45  
 # Vector of n values.  Currently n ranges from 0-4
-ns = np.random.rand(nr) * 4.0 
+ns = np.random.rand(nr) * 4.0
 # The ratio D/k. Currently the prior distribution is log-uniform from 0 to 10
-diffus = 0 * np.power(10.0, np.random.rand(nr) * 12 + 1)  
+diffus =  np.power(10.0, np.random.rand(nr) * 12 + 1)*1e-11
 #A_crit values range as a log-uniform distribution
-careas = np.power(10.0, np.random.rand(nr) * 3) 
+careas = np.power(10.0, np.random.rand(nr) * 3)
 # diffusion exponents (p)
 ps = np.zeros(nr) + 1.0 
 ########################################################################
@@ -78,10 +79,12 @@ def par_ero(i):
     return pl, i
 
 
-for c in range(4631):
-    try:
-        dem = rasterio.open(dem_folder + 'hydrosheds_bas_v3_{}.tif'.format(str(c)))
+for c in range(4632):
+    demfile = dem_folder + 'hydrosheds_bas_v3_{}.tif'.format(str(c))
+    if exists(demfile):
+        dem = rasterio.open(demfile)
         lat = dem.xy(0, 0)[1]
+        
         dx = np.cos(lat / 180 * np.pi) * (1852 / 60) * \
             3  # dx is dependent on latitude
         f = simplem.simple_model()
@@ -89,7 +92,10 @@ for c in range(4631):
         f.dy = 92.59
         
         # We must pad the DEM in order to prevent edge effects
-        f.set_z(np.pad(np.float64(np.squeeze(dem.read())), pad_width=2))
+        demz=np.float64(np.squeeze(dem.read()))
+        if demz.size <16:
+            continue
+        f.set_z(np.pad(demz, pad_width=2))
         
         #Outlet nodes are at or below 0
         f.BC = np.where(f.Z.transpose().ravel() <= 0)[0]
@@ -131,9 +137,7 @@ for c in range(4631):
         f.acc(slps)
         slpsall[c] = (f.A.ravel()[f.Z.ravel() > 0][np.argmax(
             A1.ravel()[f.Z.ravel() > 0])]) / np.max(A1.ravel()[f.Z.ravel() > 0])
-    except Exception as e:
-        print('err: ' + str(c))
-        print(e)
+
 if 1:
     np.save('{}/eros'.format(outfolder),eros1)
     np.save('{}/diffu'.format(outfolder),diffus)
