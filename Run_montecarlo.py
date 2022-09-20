@@ -2,7 +2,7 @@ import multiprocess as mp
 import matplotlib.pyplot as plt
 import rasterio
 import sys
-#sys.path.insert(1, '/Users/gr_1/Documents/simplem/') #modify based on where it is
+sys.path.insert(1, 'src')
 import simplem_par as simplem
 import numpy as np
 import ast
@@ -81,6 +81,8 @@ def par_ero(i):
 
 for c in range(4632):
     demfile = dem_folder + 'hydrosheds_bas_v3_{}.tif'.format(str(c))
+    print(demfile)
+
     if exists(demfile):
         dem = rasterio.open(demfile)
         lat = dem.xy(0, 0)[1]
