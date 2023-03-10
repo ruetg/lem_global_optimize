@@ -500,6 +500,7 @@ def lind(xy, n):
     return y, x
 
 @jit(nopython=True)
+
 def erode_explicit(slps, I, s, A, E, dx=90, dy=90, m=0.45, n=1.0, k=1e-8, dt=1, carea=0, G=0):
     """
     
@@ -539,7 +540,37 @@ def erode_explicit(slps, I, s, A, E, dx=90, dy=90, m=0.45, n=1.0, k=1e-8, dt=1, 
 
     return E
 
-
+def smooth(windowSize,I,s,z,acc,athres=5):
+    zsd = np.zeros((windowSize,len(I)))
+    zsu = np.zeros((windowSize,len(I)))
+    avgs=np.zeros(len(I))
+    distsU=np.zeros(len(I))
+    distsD = np.zeros(len(I))
+    ns = np.zeros(len(I))
+    amaxs = np.zeros(len(I))
+    for i in range(len(I)):
+        if s[i] != I[i]:
+            zsd[:-1,I[i]] = zsd[1:,s[i]]
+            zsd[-1,I[i]] = z[s[i]]
+    for i in range(len(I)-1,0,-1):
+        if s[i] != I[i]:
+            if (acc[I[i]] >= windowSize) and (acc[I[i]] >= amaxs[s[i]]):
+                amaxs[s[i]] = acc[I[i]]
+                zsu[:,s[i]] = zsu[:,I[i]]
+                zsu[:-1,s[i]] = zsu[1:,I[i]]
+                zsu[-1,s[i]] = z[I[i]]
+    for i in range(len(I)):
+        lu = len(np.where(zsu[:,i]>0)[0])
+        ld = len(np.where(zsd[:,i]>0)[0])
+        minl = min([lu,ld])
+        if minl>=windowSize:
+            avgs[i] = np.mean(np.concatenate([zsd[:,i][zsd[:,i]>0], zsu[:,i][zsu[:,i]>0]]))
+        elif minl>=1:
+            avgs[i] = np.mean(np.concatenate([zsd[:,i][zsd[:,i]>0][-minl:], zsu[:,i][zsu[:,i]>0][-minl:]]))
+        else:
+            avgs[i] = z[i]
+    return avgs
+            
 @jit(nopython=True)
 # Erode using explicit form of transport limited eqn
 def erode_fs(Z, I, s, A, E, dx=90, dy=90, m=0.45, n=1.0, k=1e-8, dt=1.0, carea=0.0, G=0.0):
